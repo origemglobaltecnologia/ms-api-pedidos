@@ -1,0 +1,23 @@
+# Arquivos compilados Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Diretório de build do Maven
+/target/
+
+# Arquivos de configuração do IDE
+.idea/
+*.iml
+.project
+.classpath
+
+# Outros arquivos e diretórios que você pode querer ignorar
+.DS_Store
+*.log
+
+# Banco H2
+*.mv.db
+*.trace.db
+*.log.db
