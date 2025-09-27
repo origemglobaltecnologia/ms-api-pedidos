@@ -8,6 +8,10 @@
 # Diretório de build do Maven
 /target/
 
+# Pastas do projeto que não devem ser versionadas
+/pedidos/
+/data/
+
 # Arquivos de configuração de IDEs
 # IntelliJ IDEA
 .idea/
