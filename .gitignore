@@ -1,3 +1,4 @@
+# ============================================
 # Arquivos compilados Java
 *.class
 *.jar
@@ -7,17 +8,31 @@
 # Diretório de build do Maven
 /target/
 
-# Arquivos de configuração do IDE
+# Arquivos de configuração de IDEs
+# IntelliJ IDEA
 .idea/
 *.iml
+
+# Eclipse
 .project
 .classpath
+.settings/
 
-# Outros arquivos e diretórios que você pode querer ignorar
+# VSCode
+.vscode/
+
+# Outros arquivos e diretórios temporários
 .DS_Store
+Thumbs.db
 *.log
 
-# Banco H2
+# Arquivos de banco de dados H2
 *.mv.db
 *.trace.db
 *.log.db
+
+# Arquivos de backup
+*.zip
+*.tar
+*.gz
+*.bak
