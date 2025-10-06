@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity; // <--- Import Adicionado
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.client.RestTemplate;
 
@@ -119,6 +120,7 @@ public class PedidoControllerTest {
 
     @Test
     void deveListarProdutosViaAPIExterna() throws Exception {
+        // Agora 'ResponseEntity' é reconhecido graças ao import
         when(restTemplate.getForEntity("http://localhost:8081/api/produtos", String.class))
                 .thenReturn(ResponseEntity.ok("[{\"nome\":\"Produto Teste\"}]"));
 
@@ -129,6 +131,7 @@ public class PedidoControllerTest {
 
     @Test
     void deveListarClientesViaAPIExterna() throws Exception {
+        // Agora 'ResponseEntity' é reconhecido graças ao import
         when(restTemplate.getForEntity("http://localhost:8082/clientes", String.class))
                 .thenReturn(ResponseEntity.ok("[{\"nome\":\"Cliente Teste\"}]"));
 
@@ -137,3 +140,4 @@ public class PedidoControllerTest {
                 .andExpect(content().string("[{\"nome\":\"Cliente Teste\"}]"));
     }
 }
+
