@@ -4,24 +4,22 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.UUID;
 
 @Entity
 @Table(name = "pedidos")
 public class Pedido {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
-    private Long clienteId;
+    private UUID clienteId;
 
-    @ElementCollection // Mapeia lista simples no JPA
+    @ElementCollection
     @CollectionTable(name = "pedido_produtos", joinColumns = @JoinColumn(name = "pedido_id"))
-    @Column(name = "produto_id")
-    private List<Long> produtoIds = new ArrayList<>(); // Lista de IDs de produtos
+    private List<ProdutoPedido> produtos = new ArrayList<>();
 
-    private Integer quantidade;
-    private Double valorTotal;
     private LocalDateTime dataPedido;
 
     @Enumerated(EnumType.STRING)
@@ -29,30 +27,21 @@ public class Pedido {
 
     public Pedido() {}
 
-    public Pedido(Long clienteId, List<Long> produtoIds, Integer quantidade, Double valorTotal, LocalDateTime dataPedido, StatusPedido status) {
+    public Pedido(UUID clienteId, List<ProdutoPedido> produtos, LocalDateTime dataPedido, StatusPedido status) {
         this.clienteId = clienteId;
-        this.produtoIds = produtoIds;
-        this.quantidade = quantidade;
-        this.valorTotal = valorTotal;
+        this.produtos = produtos;
         this.dataPedido = dataPedido;
         this.status = status;
     }
 
-    // Getters e Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public Long getClienteId() { return clienteId; }
-    public void setClienteId(Long clienteId) { this.clienteId = clienteId; }
+    public UUID getClienteId() { return clienteId; }
+    public void setClienteId(UUID clienteId) { this.clienteId = clienteId; }
 
-    public List<Long> getProdutoIds() { return produtoIds; }
-    public void setProdutoIds(List<Long> produtoIds) { this.produtoIds = produtoIds; }
-
-    public Integer getQuantidade() { return quantidade; }
-    public void setQuantidade(Integer quantidade) { this.quantidade = quantidade; }
-
-    public Double getValorTotal() { return valorTotal; }
-    public void setValorTotal(Double valorTotal) { this.valorTotal = valorTotal; }
+    public List<ProdutoPedido> getProdutos() { return produtos; }
+    public void setProdutos(List<ProdutoPedido> produtos) { this.produtos = produtos; }
 
     public LocalDateTime getDataPedido() { return dataPedido; }
     public void setDataPedido(LocalDateTime dataPedido) { this.dataPedido = dataPedido; }

@@ -1,82 +1,108 @@
 package com.pedidos.controller;
 
+import com.pedidos.model.Pedido;
+import com.pedidos.model.ProdutoPedido;
+import com.pedidos.model.StatusPedido;
+import com.pedidos.repository.PedidoRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 
 @RestController
 @RequestMapping("/pedidos")
-@CrossOrigin(origins = "http://localhost:5173") // liberando CORS para o front
+@CrossOrigin(origins = "http://localhost:5173")
 public class PedidoController {
 
+    private final PedidoRepository pedidoRepository;
     private final RestTemplate restTemplate;
-    private final List<Map<String, Object>> pedidos = new ArrayList<>();
-    private final AtomicLong counter = new AtomicLong(1);
 
-    public PedidoController(RestTemplate restTemplate) {
+    public PedidoController(PedidoRepository pedidoRepository, RestTemplate restTemplate) {
+        this.pedidoRepository = pedidoRepository;
         this.restTemplate = restTemplate;
     }
 
-    // --- CRUD de Pedidos ---
-
     @GetMapping("")
-    public ResponseEntity<List<Map<String, Object>>> listarPedidos() {
-        return ResponseEntity.ok(pedidos);
+    public ResponseEntity<List<Pedido>> listarPedidos() {
+        return ResponseEntity.ok(pedidoRepository.findAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> buscarPedido(@PathVariable Long id) {
-        return pedidos.stream()
-                .filter(p -> p.get("id").equals(id))
-                .findFirst()
+    public ResponseEntity<Pedido> buscarPedido(@PathVariable UUID id) {
+        return pedidoRepository.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("")
-    public ResponseEntity<Map<String, Object>> criarPedido(@RequestBody Map<String, Object> pedido) {
-        long id = counter.getAndIncrement();
-        pedido.put("id", id);
-        pedidos.add(pedido);
-        return ResponseEntity.ok(pedido);
+    public ResponseEntity<Pedido> criarPedido(@RequestBody Map<String, Object> dados) {
+        UUID clienteId = UUID.fromString((String) dados.get("clienteId"));
+        List<Map<String, Object>> produtosJson = (List<Map<String, Object>>) dados.get("produtos");
+
+        List<ProdutoPedido> produtos = new ArrayList<>();
+        for (Map<String, Object> p : produtosJson) {
+            UUID produtoId = UUID.fromString((String) p.get("produtoId"));
+            Integer quantidade = (Integer) p.get("quantidade");
+            produtos.add(new ProdutoPedido(produtoId, quantidade));
+        }
+
+        Pedido pedido = new Pedido(
+                clienteId,
+                produtos,
+                LocalDateTime.now(),
+                StatusPedido.PENDENTE
+        );
+
+        return ResponseEntity.ok(pedidoRepository.save(pedido));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> atualizarPedido(@PathVariable Long id,
-                                                               @RequestBody Map<String, Object> dados) {
-        for (int i = 0; i < pedidos.size(); i++) {
-            Map<String, Object> p = pedidos.get(i);
-            if (p.get("id").equals(id)) {
-                dados.put("id", id);
-                pedidos.set(i, dados);
-                return ResponseEntity.ok(dados);
-            }
+    public ResponseEntity<Pedido> atualizarPedido(@PathVariable UUID id, @RequestBody Map<String, Object> dados) {
+        Optional<Pedido> existente = pedidoRepository.findById(id);
+        if (existente.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
+
+        Pedido pedido = existente.get();
+
+        if (dados.containsKey("status")) {
+            pedido.setStatus(StatusPedido.valueOf((String) dados.get("status")));
+        }
+
+        if (dados.containsKey("produtos")) {
+            List<Map<String, Object>> produtosJson = (List<Map<String, Object>>) dados.get("produtos");
+            List<ProdutoPedido> produtos = new ArrayList<>();
+            for (Map<String, Object> p : produtosJson) {
+                UUID produtoId = UUID.fromString((String) p.get("produtoId"));
+                Integer quantidade = (Integer) p.get("quantidade");
+                produtos.add(new ProdutoPedido(produtoId, quantidade));
+            }
+            pedido.setProdutos(produtos);
+        }
+
+        return ResponseEntity.ok(pedidoRepository.save(pedido));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarPedido(@PathVariable Long id) {
-        boolean removed = pedidos.removeIf(p -> p.get("id").equals(id));
-        return removed ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deletarPedido(@PathVariable UUID id) {
+        if (!pedidoRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        pedidoRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
-
-    // --- Listagem de Produtos e Clientes via APIs externas ---
 
     @GetMapping("/produtos")
     public ResponseEntity<String> listarProdutos() {
         String url = "http://localhost:8081/api/produtos";
-        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-        return response;
+        return restTemplate.getForEntity(url, String.class);
     }
 
     @GetMapping("/clientes")
     public ResponseEntity<String> listarClientes() {
         String url = "http://localhost:8082/clientes";
-        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-        return response;
+        return restTemplate.getForEntity(url, String.class);
     }
 }
