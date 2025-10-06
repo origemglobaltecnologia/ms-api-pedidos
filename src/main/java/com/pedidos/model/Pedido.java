@@ -11,7 +11,6 @@ import java.util.UUID;
 public class Pedido {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
     private UUID clienteId;
@@ -25,9 +24,12 @@ public class Pedido {
     @Enumerated(EnumType.STRING)
     private StatusPedido status;
 
-    public Pedido() {}
+    public Pedido() {
+        this.id = UUID.randomUUID(); // CORREÇÃO: Inicializa o ID com um UUID
+    }
 
     public Pedido(UUID clienteId, List<ProdutoPedido> produtos, LocalDateTime dataPedido, StatusPedido status) {
+        this(); // Chama o construtor padrão para gerar o ID
         this.clienteId = clienteId;
         this.produtos = produtos;
         this.dataPedido = dataPedido;
@@ -49,3 +51,4 @@ public class Pedido {
     public StatusPedido getStatus() { return status; }
     public void setStatus(StatusPedido status) { this.status = status; }
 }
+
