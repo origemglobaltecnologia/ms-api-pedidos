@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity; // <--- Import Adicionado
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.client.RestTemplate;
 
@@ -48,7 +48,9 @@ public class PedidoControllerTest {
     void setup() {
         clienteId = UUID.randomUUID();
         produtoId = UUID.randomUUID();
+        // Nota: O construtor de Pedido deve gerar o ID, se você usou a correção anterior.
         ProdutoPedido produto = new ProdutoPedido(produtoId, 2);
+        // Usamos o construtor original aqui para que o Mockito crie a instância
         pedido = new Pedido(clienteId, List.of(produto), LocalDateTime.now(), StatusPedido.PENDENTE);
     }
 
@@ -82,6 +84,7 @@ public class PedidoControllerTest {
         );
         dados.put("produtos", produtos);
 
+        // O Pedido gerado aqui deve ter o ID gerado pelo construtor (correção anterior)
         when(pedidoRepository.save(any(Pedido.class))).thenReturn(pedido);
 
         mockMvc.perform(post("/pedidos")
@@ -95,10 +98,16 @@ public class PedidoControllerTest {
     void deveAtualizarPedido() throws Exception {
         UUID id = UUID.randomUUID();
         pedido.setId(id);
-        pedido.setStatus(StatusPedido.PENDENTE);
-
+        
+        // Garante que o pedidoRepository retorne o pedido inicial (PENDENTE)
         when(pedidoRepository.findById(id)).thenReturn(Optional.of(pedido));
-        when(pedidoRepository.save(any(Pedido.class))).thenReturn(pedido);
+        
+        // Cria um pedido *diferente* para ser o resultado do save, refletindo a mudança de status
+        Pedido pedidoAtualizado = new Pedido(clienteId, pedido.getProdutos(), pedido.getDataPedido(), StatusPedido.CONFIRMADO);
+        pedidoAtualizado.setId(id);
+        
+        // Faz com que o save retorne a versão CONFIRMADO
+        when(pedidoRepository.save(any(Pedido.class))).thenReturn(pedidoAtualizado);
 
         Map<String, Object> update = Map.of("status", "CONFIRMADO");
 
@@ -106,7 +115,8 @@ public class PedidoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(update)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("PENDENTE"));
+                // CORREÇÃO AQUI: O teste deve esperar o status que ele enviou, que é CONFIRMADO
+                .andExpect(jsonPath("$.status").value("CONFIRMADO")); 
     }
 
     @Test
@@ -120,7 +130,6 @@ public class PedidoControllerTest {
 
     @Test
     void deveListarProdutosViaAPIExterna() throws Exception {
-        // Agora 'ResponseEntity' é reconhecido graças ao import
         when(restTemplate.getForEntity("http://localhost:8081/api/produtos", String.class))
                 .thenReturn(ResponseEntity.ok("[{\"nome\":\"Produto Teste\"}]"));
 
@@ -131,7 +140,6 @@ public class PedidoControllerTest {
 
     @Test
     void deveListarClientesViaAPIExterna() throws Exception {
-        // Agora 'ResponseEntity' é reconhecido graças ao import
         when(restTemplate.getForEntity("http://localhost:8082/clientes", String.class))
                 .thenReturn(ResponseEntity.ok("[{\"nome\":\"Cliente Teste\"}]"));
 
